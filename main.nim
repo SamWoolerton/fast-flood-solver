@@ -44,10 +44,10 @@ proc findCellNeighbours(state: State, index: CellIndex): Set =
   let l = state.sideLength
   let col = (index mod l).int16
 
-  if index >= l: neighbours.incl({(index - l).int16})
-  if index <= (state.s.len - l - 1): neighbours.incl({(index + l).int16})
-  if col > 0: neighbours.incl({index - 1})
-  if col < (l - 1): neighbours.incl({index + 1})
+  if index >= l: neighbours.incl((index - l).int16)
+  if index <= (state.s.len - l - 1): neighbours.incl((index + l).int16)
+  if col > 0: neighbours.incl(index - 1)
+  if col < (l - 1): neighbours.incl(index + 1)
   
   return neighbours
 
@@ -80,7 +80,7 @@ proc findAreaNeighbours(state: State, area: Set, newAreaCells: Set, startingArea
 proc findValidMoves(state: State, areaNeighbours: Set): Set =
   var options: Set = {}
   for cellIndex in areaNeighbours:
-    options.incl({state.s[cellIndex]})
+    options.incl(state.s[cellIndex])
   return options
 
 proc isFinished(areaNeighbours: Set): bool = 
@@ -88,12 +88,13 @@ proc isFinished(areaNeighbours: Set): bool =
 
 proc step(state: State, p: PathState, move: Colour): PathState =
   let newPath = Path(colour: move, previous: p.path)
+  # intentionally clone so not sharing with another path
   var area = p.area
   var areaNeighbours = p.areaNeighbours
 
   # add matching neighbours to area set and remove from neighbours set
   var potentiallyHasNewNeighbours: Set = {}
-  for cellIndex in p.areaNeighbours:
+  for cellIndex in areaNeighbours:
     let colour = state.s[cellIndex]
     if colour == move:
       area.incl(cellIndex)
