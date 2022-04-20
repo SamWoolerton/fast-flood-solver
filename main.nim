@@ -9,11 +9,13 @@ type State = object
   s: seq[Colour]
   sideLength: Natural
 
-
-type Path = seq[Colour]
-type PathState = object
-  s: State
-  p: Path
+type
+  Path = ref object
+    colour: Colour
+    previous: Path
+  PathState = object
+    s: State
+    p: Path
 
 type Set = set[Colour]
 
@@ -23,8 +25,8 @@ let startState = block:
   #     5, 2, 3, 3, 2, 5, 2, 3, 3, 2, 3, 5, 6, 4, 3, 3, 5, 4, 6, 6, 2, 5, 2, 6, 3,
   #     2, 6, 6, 3, 6, 5, 5, 3, 3, 4, 5, 5, 2, 1, 6, 6, 3, 6, 3, 3, 5, 6, 3, 2, 6,
   #     4, 3, 2, 4, 4, 6, 3, 5, 4]
-  let state = @[4,3,4,6,3,3,5,5,3,3,4,5,4,4,6,5,6,5,6,5,5,6,5,2,5,3,1,6,4,3,5,5,5,6,1,3,6,3,3,3,5,5,2,3,3,2,5,2,3]
-  # let state = @[4,3,4,6,3,3,5,5,3]
+  # let state = @[4,3,4,6,3,3,5,5,3,3,4,5,4,4,6,5,6,5,6,5,5,6,5,2,5,3,1,6,4,3,5,5,5,6,1,3,6,3,3,3,5,5,2,3,3,2,5,2,3]
+  let state = @[4,3,4,6,3,3,5,5,3]
   
   State(s: state.map((x) => int16(x)), sideLength: state.len.float.sqrt.round.Natural)
 
@@ -76,8 +78,7 @@ proc isFinished(areaNeighbours: Set): bool =
   return areaNeighbours.card == 0
 
 proc step(pathState: PathState, move: Colour, area: Set): PathState =
-  var newPath = pathState.p
-  newPath.add(move)
+  let newPath = Path(colour: move, previous: pathState.p)
 
   let newStateData: seq[Colour] = collect:
     for (i, cell) in pathState.s.s.pairs:
@@ -87,7 +88,7 @@ proc step(pathState: PathState, move: Colour, area: Set): PathState =
   return PathState(s: State(s: newStateData, sideLength: pathState.s.sideLength), p: newPath)
 
 proc solve(state: State): Path = 
-  var pathStates: seq[PathState] = @[PathState(s: state, p: @[])]
+  var pathStates: seq[PathState] = @[PathState(s: state, p: Path())]
   var stepCount = 0
   var filledCells: seq[int] = @[]
 
@@ -112,6 +113,13 @@ proc solve(state: State): Path =
 
     echo &"Had max {filledCells.max} and min {filledCells.min} cells filled"
     filledCells = @[]
+
+
+proc `$`(path: Path): string = 
+  var current = path
+  while current.previous != nil:
+    result = fmt"{current.colour} " & result
+    current = current.previous
 
 startState.printState
 echo startState.solve

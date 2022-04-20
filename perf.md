@@ -30,3 +30,7 @@ Starting iteration #10 with 40717 paths
 Had max 47 and min 14 cells filled
 Starting iteration #11 with 151568 paths
 @[3, 4, 5, 3, 4, 5, 1, 2, 3, 6]
+
+## Structural sharing for `path`
+
+4m00s
