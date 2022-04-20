@@ -4,20 +4,23 @@ from strutils import join
 import sugar
 
 type Colour = int16
+type CellIndex = int16
 
 type State = object
   s: seq[Colour]
   sideLength: Natural
+  
+type Set = set[Colour]
 
 type
   Path = ref object
     colour: Colour
     previous: Path
   PathState = object
-    s: State
-    p: Path
+    area: Set
+    areaNeighbours: Set
+    path: Path
 
-type Set = set[Colour]
 
 let startState = block:
   # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5,
@@ -25,8 +28,10 @@ let startState = block:
   #     5, 2, 3, 3, 2, 5, 2, 3, 3, 2, 3, 5, 6, 4, 3, 3, 5, 4, 6, 6, 2, 5, 2, 6, 3,
   #     2, 6, 6, 3, 6, 5, 5, 3, 3, 4, 5, 5, 2, 1, 6, 6, 3, 6, 3, 3, 5, 6, 3, 2, 6,
   #     4, 3, 2, 4, 4, 6, 3, 5, 4]
-  # let state = @[4,3,4,6,3,3,5,5,3,3,4,5,4,4,6,5,6,5,6,5,5,6,5,2,5,3,1,6,4,3,5,5,5,6,1,3,6,3,3,3,5,5,2,3,3,2,5,2,3]
-  let state = @[4,3,4,6,3,3,5,5,3]
+  let state = @[4,3,4,6,3,3,5,5,3,3,4,5,4,4,6,5,6,5,6,5,5,6,5,2,5,3,1,6,4,3,5,5,5,6,1,3,6,3,3,3,5,5,2,3,3,2,5,2,3]
+  # let state = @[4,3,4,6,3,3,5,5,3]
+  # let state = @[4,3,6,4,3,3,5,5,3]
+  # let state = @[4,4,4,4,4,4,5,5,3]
   
   State(s: state.map((x) => int16(x)), sideLength: state.len.float.sqrt.round.Natural)
 
@@ -34,7 +39,7 @@ let startState = block:
 proc printState(state: State) =
   state.s.distribute(state.sideLength).mapIt(join(it, " ")).join("\n").echo
 
-proc findCellNeighbours(state: State, index: int16): Set =
+proc findCellNeighbours(state: State, index: CellIndex): Set =
   var neighbours: Set = {}
   let l = state.sideLength
   let col = (index mod l).int16
@@ -46,27 +51,31 @@ proc findCellNeighbours(state: State, index: int16): Set =
   
   return neighbours
 
-proc findContiguousArea(state: State): (Set, Set) =
-  var area = {0.int16}
-  var areaNeighbours: Set = {}
-  var checked = {0.int16}
-  let s = state.s
-  var queue = @[0.int16]
+proc findAreaNeighbours(state: State, area: Set, newAreaCells: Set, startingAreaNeighbours: Set): Set =
+   # for new area cells, calculate neighbours that aren't in area already
+  var newNeighbours: Set = {}
+  for n in newAreaCells:
+    newNeighbours = newNeighbours + findCellNeighbours(state, n)
+  newNeighbours = newNeighbours - area
+
+  # flood find new neighbours
+  var checked: Set = {}
+  var queue: seq[CellIndex] = @[]
+  for n in newNeighbours: queue.add(n)
 
   while queue.len > 0:
     let cellIndex = queue.pop()
     let cellNeighbours = findCellNeighbours(state, cellIndex)
-    let unchecked = cellNeighbours - (checked * cellNeighbours)
-    checked = checked + unchecked
+    let neighboursNotInArea = (cellNeighbours - area) - checked
 
-    for neighbourIndex in unchecked:
-      if s[neighbourIndex] == s[cellIndex]:
-        area.incl({neighbourIndex})
+  # this needs to compare back to the neighbour cell
+    for neighbourIndex in neighboursNotInArea:
+      if state.s[neighbourIndex] == state.s[cellIndex]:
+        newNeighbours.incl(neighbourIndex)
         queue.add(neighbourIndex)
-      else:
-        areaNeighbours.incl({neighbourIndex})
+        checked.incl(neighbourIndex)
 
-  return  (area, areaNeighbours)
+  return startingAreaNeighbours + newNeighbours
 
 proc findValidMoves(state: State, areaNeighbours: Set): Set =
   var options: Set = {}
@@ -77,18 +86,30 @@ proc findValidMoves(state: State, areaNeighbours: Set): Set =
 proc isFinished(areaNeighbours: Set): bool = 
   return areaNeighbours.card == 0
 
-proc step(pathState: PathState, move: Colour, area: Set): PathState =
-  let newPath = Path(colour: move, previous: pathState.p)
+proc step(state: State, p: PathState, move: Colour): PathState =
+  let newPath = Path(colour: move, previous: p.path)
+  var area = p.area
+  var areaNeighbours = p.areaNeighbours
 
-  let newStateData: seq[Colour] = collect:
-    for (i, cell) in pathState.s.s.pairs:
-      if i.int16 in area: move
-      else: cell
+  # add matching neighbours to area set and remove from neighbours set
+  var potentiallyHasNewNeighbours: Set = {}
+  for cellIndex in p.areaNeighbours:
+    let colour = state.s[cellIndex]
+    if colour == move:
+      area.incl(cellIndex)
+      areaNeighbours.excl(cellIndex)
+      potentiallyHasNewNeighbours.incl(cellIndex)
 
-  return PathState(s: State(s: newStateData, sideLength: pathState.s.sideLength), p: newPath)
+  areaNeighbours = findAreaNeighbours(state, area, potentiallyHasNewNeighbours, areaNeighbours)
+
+  return PathState(area: area, areaNeighbours: areaNeighbours, path: newPath)
+
+proc getStartingPathState(state: State): PathState = 
+  let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.int16}, {0.int16})
+  return step(state, PathState(area: {}, areaNeighbours: areaNeighbours, path: Path()), state.s[0])
 
 proc solve(state: State): Path = 
-  var pathStates: seq[PathState] = @[PathState(s: state, p: Path())]
+  var pathStates: seq[PathState] = @[getStartingPathState(state)]
   var stepCount = 0
   var filledCells: seq[int] = @[]
 
@@ -100,14 +121,13 @@ proc solve(state: State): Path =
     var newPathStates: seq[PathState] = @[]
     for p in pathStates:
       # copy because branching and don't have structural sharing
-      let (area, areaNeighbours) = findContiguousArea(p.s)
-      filledCells.add(area.card)
+      filledCells.add(p.area.card)
 
       # exit state - return with the first valid path found
-      if isFinished(areaNeighbours): return p.p
+      if isFinished(p.areaNeighbours): return p.path
 
-      let validMoves = findValidMoves(state, areaNeighbours)
-      for m in validMoves: newPathStates.add(step(p, m, area))
+      let validMoves = findValidMoves(state, p.areaNeighbours)
+      for m in validMoves: newPathStates.add(step(state, p, m))
     
     pathStates = newPathStates
 

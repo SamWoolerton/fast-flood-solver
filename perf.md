@@ -34,3 +34,7 @@ Starting iteration #11 with 151568 paths
 ## Structural sharing for `path`
 
 4m00s
+
+## Refactor path state to use much less copying
+
+2m39s
