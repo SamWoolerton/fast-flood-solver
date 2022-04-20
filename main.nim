@@ -116,28 +116,31 @@ proc solve(state: State): Path =
   # each iteration, loop through each path and progress by one move
   while true:
     stepCount += 1
-    echo &"### Starting iteration #{stepCount} with {pathStates.len} paths"
+    echo &"- Starting iteration #{stepCount} with {pathStates.len} paths"
 
     var newPathStates: seq[PathState] = @[]
     for p in pathStates:
-      # copy because branching and don't have structural sharing
-      filledCells.add(p.area.card)
-
-      # exit state - return with the first valid path found
-      if isFinished(p.areaNeighbours): return p.path
-
       let validMoves = findValidMoves(state, p.areaNeighbours)
-      for m in validMoves: newPathStates.add(step(state, p, m))
+      for m in validMoves:
+        let ps = step(state, p, m)
+        newPathStates.add(ps)
+
+        # tracking summary stats
+        filledCells.add(ps.area.card)
+
+        # exit state - return with the first valid path found
+        if isFinished(ps.areaNeighbours): return ps.path
     
     pathStates = newPathStates
 
-    echo &"Had max {filledCells.max} and min {filledCells.min} cells filled"
+    echo &"Max {filledCells.max} and min {filledCells.min} cells filled"
     filledCells = @[]
 
 
 proc `$`(path: Path): string = 
   var current = path
-  while current.previous != nil:
+  # don't print the selection of the starting cell, otherwise it would be a single .previous
+  while current.previous.previous != nil:
     result = fmt"{current.colour} " & result
     current = current.previous
 
