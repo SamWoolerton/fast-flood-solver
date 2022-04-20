@@ -1,4 +1,4 @@
-import std/strformat
+import std/[strformat,math]
 import sequtils
 from strutils import join
 import sugar
@@ -26,7 +26,7 @@ let startState = block:
   let state = @[4,3,4,6,3,3,5,5,3,3,4,5,4,4,6,5,6,5,6,5,5,6,5,2,5,3,1,6,4,3,5,5,5,6,1,3,6,3,3,3,5,5,2,3,3,2,5,2,3]
   # let state = @[4,3,4,6,3,3,5,5,3]
   
-  State(s: state.map((x) => int16(x)), sideLength: 7)
+  State(s: state.map((x) => int16(x)), sideLength: state.len.float.sqrt.round.Natural)
 
 
 proc printState(state: State) =
