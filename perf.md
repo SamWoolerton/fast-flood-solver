@@ -1,6 +1,12 @@
-# 7x7 with 49 cells, before any performance optimisations:
+# Timing
 
-## Paths
+Run `time nim -d:release r after.nim`
+
+## 7x7 with 49 cells, before any performance optimisations:
+
+4m05s
+
+### Paths
 
 Starting iteration #1 with 1 paths
 Had max 1 and min 1 cells filled
@@ -24,7 +30,3 @@ Starting iteration #10 with 40717 paths
 Had max 47 and min 14 cells filled
 Starting iteration #11 with 151568 paths
 @[3, 4, 5, 3, 4, 5, 1, 2, 3, 6]
-
-## Timing
-
-21m6.148s
