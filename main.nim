@@ -4,14 +4,14 @@ from strutils import join
 import sugar
 import algorithm
 
-type Colour = range[0..49]
-type CellIndex = int16
+type Colour = range[0..10]
+type CellIndex = range[0..99]
 
 type State = object
   s: seq[Colour]
   sideLength: Natural
 
-type Set = set[Colour]
+type Set = set[CellIndex]
 
 type
   Path = ref object
@@ -24,14 +24,14 @@ type
 
 
 let startState = block:
-  # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5,
-  #     6, 5, 6, 5, 5, 6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5,
-  #     5, 2, 3, 3, 2, 5, 2, 3, 3, 2, 3, 5, 6, 4, 3, 3, 5, 4, 6, 6, 2, 5, 2, 6, 3,
-  #     2, 6, 6, 3, 6, 5, 5, 3, 3, 4, 5, 5, 2, 1, 6, 6, 3, 6, 3, 3, 5, 6, 3, 2, 6,
-  #     4, 3, 2, 4, 4, 6, 3, 5, 4]
-  let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5, 6, 5, 6, 5, 5,
-      6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5, 5, 2, 3, 3, 2,
-      5, 2, 3]
+  let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5,
+      6, 5, 6, 5, 5, 6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5,
+      5, 2, 3, 3, 2, 5, 2, 3, 3, 2, 3, 5, 6, 4, 3, 3, 5, 4, 6, 6, 2, 5, 2, 6, 3,
+      2, 6, 6, 3, 6, 5, 5, 3, 3, 4, 5, 5, 2, 1, 6, 6, 3, 6, 3, 3, 5, 6, 3, 2, 6,
+      4, 3, 2, 4, 4, 6, 3, 5, 4]
+  # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5, 6, 5, 6, 5, 5,
+  #     6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5, 5, 2, 3, 3, 2,
+  #     5, 2, 3]
   # let state = @[4, 3, 4, 6, 3, 6, 5, 5, 5, 3, 4, 5, 4, 4, 6, 5]
   # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3]
   # let state = @[4, 3, 6, 4, 3, 3, 5, 5, 3]
@@ -81,7 +81,7 @@ proc findAreaNeighbours(state: State, area: Set, newAreaCells: Set, startingArea
     let cellNeighbours = findCellNeighbours(state, cellIndex)
     let neighboursNotInArea = (cellNeighbours - area) - checked
 
-  # this needs to compare back to the neighbour cell
+    # this needs to compare back to the neighbour cell
     for neighbourIndex in neighboursNotInArea:
       if state.s[neighbourIndex] == state.s[cellIndex]:
         newNeighbours.incl(neighbourIndex)
@@ -119,7 +119,7 @@ proc step(state: State, p: PathState, move: Colour): PathState =
   return PathState(area: area, areaNeighbours: areaNeighbours, path: newPath)
 
 proc getStartingPathState(state: State): PathState =
-  let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.Colour}, {0.Colour})
+  let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.CellIndex}, {0.CellIndex})
   return step(state, PathState(area: {}, areaNeighbours: areaNeighbours, path: Path()), state.s[0])
 
 proc prune(pathStates: var seq[PathState], sideLength: int16): seq[PathState] = 

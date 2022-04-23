@@ -104,3 +104,52 @@ Unexpected performance benefit was that the termination check happened at the st
   Max 47 and min 16 cells filled
   Pruned 2227/3966 paths
 - Starting iteration #10 with 1739 paths
+
+## Restrict `Set` size
+
+0.21s for 7x7 (second run; first run includes compilation time so is about a second)
+8.95s for 10x10
+
+Huge performance gains from restricting `Set` range from `int16` to `0..99` - great work [Yardanico](https://github.com/Yardanico)
+
+### Paths for 10x10
+
+- Starting iteration #1 with 1 paths
+  Max 10 and min 3 cells filled
+  Pruned 0/2 paths
+- Starting iteration #2 with 2 paths
+  Max 13 and min 6 cells filled
+  Pruned 0/6 paths
+- Starting iteration #3 with 6 paths
+  Max 20 and min 7 cells filled
+  Pruned 7/22 paths
+- Starting iteration #4 with 15 paths
+  Max 30 and min 9 cells filled
+  Pruned 11/56 paths
+- Starting iteration #5 with 45 paths
+  Max 42 and min 10 cells filled
+  Pruned 45/189 paths
+- Starting iteration #6 with 144 paths
+  Max 53 and min 16 cells filled
+  Pruned 120/615 paths
+- Starting iteration #7 with 495 paths
+  Max 65 and min 17 cells filled
+  Pruned 111/2091 paths
+- Starting iteration #8 with 1980 paths
+  Max 75 and min 18 cells filled
+  Pruned 120/8383 paths
+- Starting iteration #9 with 8263 paths
+  Max 84 and min 20 cells filled
+  Pruned 5861/35193 paths
+- Starting iteration #10 with 29332 paths
+  Max 92 and min 22 cells filled
+  Pruned 2568/122570 paths
+- Starting iteration #11 with 120002 paths
+  Max 96 and min 24 cells filled
+  Pruned 200639/494494 paths
+- Starting iteration #12 with 293855 paths
+  Max 99 and min 25 cells filled
+  Pruned 801508/1202261 paths
+- Starting iteration #13 with 400753 paths
+
+5 2 5 3 6 3 5 6 3 1 2 5 4
