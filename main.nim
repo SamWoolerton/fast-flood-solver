@@ -4,7 +4,7 @@ from strutils import join
 import sugar
 import algorithm
 
-type Colour = int16
+type Colour = range[0..49]
 type CellIndex = int16
 
 type State = object
@@ -37,7 +37,7 @@ let startState = block:
   # let state = @[4, 3, 6, 4, 3, 3, 5, 5, 3]
   # let state = @[4, 4, 4, 4, 4, 4, 5, 5, 3]
 
-  State(s: state.map((x) => int16(x)), sideLength: state.len.float.sqrt.round.Natural)
+  State(s: state.map((x) => Colour(x)), sideLength: state.len.float.sqrt.round.Natural)
 
 
 proc printState(state: State) =
@@ -119,7 +119,7 @@ proc step(state: State, p: PathState, move: Colour): PathState =
   return PathState(area: area, areaNeighbours: areaNeighbours, path: newPath)
 
 proc getStartingPathState(state: State): PathState =
-  let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.int16}, {0.int16})
+  let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.Colour}, {0.Colour})
   return step(state, PathState(area: {}, areaNeighbours: areaNeighbours, path: Path()), state.s[0])
 
 proc prune(pathStates: var seq[PathState], sideLength: int16): seq[PathState] = 
