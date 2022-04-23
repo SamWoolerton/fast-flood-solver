@@ -112,6 +112,8 @@ Unexpected performance benefit was that the termination check happened at the st
 
 Huge performance gains from restricting `Set` range from `int16` to `0..99` - great work [Yardanico](https://github.com/Yardanico)
 
+Note (per Yardanico again) that using `-d:danger --gc:arc` (disabling runtime checks and switching GC algorithm) improves 10x10 performance further to 7.75s
+
 ### Paths for 10x10
 
 - Starting iteration #1 with 1 paths
