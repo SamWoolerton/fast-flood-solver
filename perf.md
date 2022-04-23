@@ -40,7 +40,7 @@ Run `time nim -d:release r main.nim`
 
 2m39s
 
-## Fix
+## Reorder `solve`
 
 Reordered `solve` so progress logs made more sense (max and min calculations are calculated end of the iteration rather than for previous iteration).
 Unexpected performance benefit was that the termination check happened at the start of the loop rather than after each `step` - moving this cut down the runtime dramatically.
@@ -69,3 +69,38 @@ Unexpected performance benefit was that the termination check happened at the st
   Max 47 and min 14 cells filled
 - Starting iteration #10 with 40717 paths
   3 4 5 3 4 5 1 2 3 6
+
+## Pruning paths that are dominated by another
+
+6.79s
+
+### Paths
+
+- Starting iteration #1 with 1 paths
+  Max 4 and min 2 cells filled
+  Pruned 0/2 paths
+- Starting iteration #2 with 2 paths
+  Max 7 and min 4 cells filled
+  Pruned 1/5 paths
+- Starting iteration #3 with 4 paths
+  Max 15 and min 5 cells filled
+  Pruned 2/12 paths
+- Starting iteration #4 with 10 paths
+  Max 24 and min 7 cells filled
+  Pruned 8/34 paths
+- Starting iteration #5 with 26 paths
+  Max 31 and min 8 cells filled
+  Pruned 25/94 paths
+- Starting iteration #6 with 69 paths
+  Max 37 and min 9 cells filled
+  Pruned 96/255 paths
+- Starting iteration #7 with 159 paths
+  Max 41 and min 14 cells filled
+  Pruned 58/587 paths
+- Starting iteration #8 with 529 paths
+  Max 45 and min 15 cells filled
+  Pruned 819/1963 paths
+- Starting iteration #9 with 1144 paths
+  Max 47 and min 16 cells filled
+  Pruned 2227/3966 paths
+- Starting iteration #10 with 1739 paths

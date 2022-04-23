@@ -2,6 +2,7 @@ import std/[strformat, math]
 import sequtils
 from strutils import join
 import sugar
+import algorithm
 
 type Colour = int16
 type CellIndex = int16
@@ -31,6 +32,7 @@ let startState = block:
   let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5, 6, 5, 6, 5, 5,
       6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5, 5, 2, 3, 3, 2,
       5, 2, 3]
+  # let state = @[4, 3, 4, 6, 3, 6, 5, 5, 5, 3, 4, 5, 4, 4, 6, 5]
   # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3]
   # let state = @[4, 3, 6, 4, 3, 3, 5, 5, 3]
   # let state = @[4, 4, 4, 4, 4, 4, 5, 5, 3]
@@ -40,6 +42,15 @@ let startState = block:
 
 proc printState(state: State) =
   state.s.distribute(state.sideLength).mapIt(join(it, " ")).join("\n").echo
+
+proc printSet(s: Set, len: int16) = 
+  var str = ""
+  for i in 0..<(len * len):
+    if i.int16 in s: str &= "#"
+    else: str &= "_"
+
+    if i > 0 and (i mod len == 0): str &= "\n"
+  echo str
 
 proc findCellNeighbours(state: State, index: CellIndex): Set =
   var neighbours: Set = {}
@@ -111,6 +122,43 @@ proc getStartingPathState(state: State): PathState =
   let areaNeighbours: Set = findAreaNeighbours(state, {}, {0.int16}, {0.int16})
   return step(state, PathState(area: {}, areaNeighbours: areaNeighbours, path: Path()), state.s[0])
 
+proc prune(pathStates: var seq[PathState], sideLength: int16): seq[PathState] = 
+  let l = pathStates.len
+
+  # special-case as there's nothing to prune or sort
+  if l == 1: return pathStates
+
+  # intentionally sort in reverse so that `solve` will hit early termination
+  pathStates.sort((a, b) => cmp(b.area.card, a.area.card))
+
+  let maxPruneCount = (l * 2 / 3).trunc.int
+  let remaining = l - maxPruneCount
+  let topCount = min(15, remaining)
+  let top = pathStates[0..<topCount]
+  
+  var prunedCount = 0
+  # necessary to skip outer loop
+  var prunePath = false
+
+  let pruned = collect:
+    for index in countdown(l - 1, 0):
+      prunePath = false
+      template ps: PathState = pathStates[index]
+
+      if index >= topCount and prunedCount <= maxPruneCount:
+        for t in top:
+          if ps.area <= t.area:
+            inc prunedCount
+            prunePath = true
+            break
+        if prunePath: continue
+
+      ps
+
+  echo &"Pruned {prunedCount}/{l} paths"
+  return pruned
+
+
 proc solve(state: State): Path =
   var pathStates: seq[PathState] = @[getStartingPathState(state)]
   var stepCount = 0
@@ -134,9 +182,8 @@ proc solve(state: State): Path =
         # exit state - return with the first valid path found
         if isFinished(ps.areaNeighbours): return ps.path
 
-    pathStates = newPathStates
-
     echo &"Max {filledCells.max} and min {filledCells.min} cells filled"
+    pathStates = newPathStates.prune(state.sideLength.int16)
     filledCells = @[]
 
 
