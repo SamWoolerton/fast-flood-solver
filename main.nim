@@ -1,4 +1,4 @@
-import std/[strformat, math]
+import std/[json, math, strformat, tables, times]
 import sequtils
 from strutils import join
 import sugar
@@ -22,22 +22,8 @@ type
     areaNeighbours: Set
     path: Path
 
-
-let startState = block:
-  let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5,
-      6, 5, 6, 5, 5, 6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5,
-      5, 2, 3, 3, 2, 5, 2, 3, 3, 2, 3, 5, 6, 4, 3, 3, 5, 4, 6, 6, 2, 5, 2, 6, 3,
-      2, 6, 6, 3, 6, 5, 5, 3, 3, 4, 5, 5, 2, 1, 6, 6, 3, 6, 3, 3, 5, 6, 3, 2, 6,
-      4, 3, 2, 4, 4, 6, 3, 5, 4]
-  # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3, 3, 4, 5, 4, 4, 6, 5, 6, 5, 6, 5, 5,
-  #     6, 5, 2, 5, 3, 1, 6, 4, 3, 5, 5, 5, 6, 1, 3, 6, 3, 3, 3, 5, 5, 2, 3, 3, 2,
-  #     5, 2, 3]
-  # let state = @[4, 3, 4, 6, 3, 6, 5, 5, 5, 3, 4, 5, 4, 4, 6, 5]
-  # let state = @[4, 3, 4, 6, 3, 3, 5, 5, 3]
-  # let state = @[4, 3, 6, 4, 3, 3, 5, 5, 3]
-  # let state = @[4, 4, 4, 4, 4, 4, 5, 5, 3]
-
-  State(s: state.map((x) => Colour(x)), sideLength: state.len.float.sqrt.round.Natural)
+type JsonState = object
+  grid: seq[seq[Colour]]
 
 
 proc printState(state: State) =
@@ -186,7 +172,6 @@ proc solve(state: State): Path =
     pathStates = newPathStates.prune(state.sideLength.int16)
     filledCells = @[]
 
-
 proc `$`(path: Path): string =
   var current = path
   # don't print the selection of the starting cell, otherwise it would be a single .previous
@@ -194,5 +179,30 @@ proc `$`(path: Path): string =
     result = fmt"{current.colour} " & result
     current = current.previous
 
-startState.printState
-echo startState.solve
+proc parseStates(): seq[State] = 
+  let providedStates = readFile("states.json").parseJson.to(seq[JsonState])
+  var parsedStates: seq[State] = @[]
+  for s in providedStates:
+    let state = collect:
+      for row in s.grid:
+        for cell in row:
+          Colour(cell)
+    parsedStates.add State(s: state, sideLength: 10)
+  return parsedStates
+
+proc main() =
+  let parsedStates = parseStates()
+  var counter = 0
+  for s in parsedStates:
+    inc counter
+
+    echo "Starting state solve #", counter
+    let time = cpuTime()
+  
+    s.printState
+    echo s.solve
+
+    let seconds = cpuTime() - time
+    echo &"Time taken: {seconds:.2f}s\n"
+
+main()
